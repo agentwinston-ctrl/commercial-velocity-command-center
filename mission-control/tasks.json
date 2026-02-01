@@ -1,0 +1,61 @@
+{
+  "meta": {
+    "name": "Debt Ends — Mission Control",
+    "updatedAt": "2026-02-01T00:05:00.000Z"
+  },
+  "columns": [
+    {
+      "id": "backlog",
+      "title": "Backlog",
+      "items": []
+    },
+    {
+      "id": "in_progress",
+      "title": "In Progress",
+      "items": [
+        {
+          "id": "vendor-research",
+          "title": "Research call routing stack: Ringba vs CallRail vs Twilio (for Canadian LIT pay-per-call)",
+          "notes": "Deliver recommendation + decision criteria; prioritize Ringba research.",
+          "priority": "P0"
+        },
+        {
+          "id": "p1-blueprint",
+          "title": "Finalize Phase 1/2/3 Operating Manual (SOP + tech stack + workflows)",
+          "notes": "Write the full run-the-business SOP + game plan; no implementation yet.",
+          "priority": "P0"
+        },
+        {
+          "id": "tier1-docs",
+          "title": "Draft Tier-1 docs: Offer sheet, qualification script/form, routing SOP, tracking spec, billing/credit ledger spec",
+          "notes": "Make it market-ready; include compliance-safe positioning and the two operating modes (live-only vs booked-consult).",
+          "priority": "P0"
+        }
+      ]
+    },
+    {
+      "id": "blocked",
+      "title": "Blocked",
+      "items": [
+        {
+          "id": "telegram-group-test",
+          "title": "Send a test message to Devon’s Telegram group",
+          "notes": "Need group chat id/handle and allowlist permission if required.",
+          "priority": "P0"
+        }
+      ]
+    },
+    {
+      "id": "done",
+      "title": "Done",
+      "items": [
+        {
+          "id": "mission-control",
+          "title": "Build Mission Control dashboard (local) so Devon can watch progress",
+          "notes": "Local dashboard served from tasks.json.",
+          "priority": "P0"
+        }
+      ]
+    }
+  ]
+}

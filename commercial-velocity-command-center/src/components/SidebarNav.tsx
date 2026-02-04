@@ -16,12 +16,12 @@ export default function SidebarNav() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-slate-900 bg-slate-950/60 md:block">
+    <aside className="hidden w-64 shrink-0 border-r border-[var(--border)] bg-[var(--bg)]/60 md:block">
       <div className="p-6">
-        <div className="text-sm font-semibold tracking-tight text-slate-100">
+        <div className="text-sm font-semibold tracking-tight text-[var(--text)]">
           Commercial Velocity
         </div>
-        <div className="mt-1 text-xs text-slate-400">Command Center</div>
+        <div className="mt-1 text-xs text-[var(--muted3)]">Command Center</div>
 
         <nav className="mt-6 space-y-1">
           {nav.map((item) => {
@@ -33,8 +33,8 @@ export default function SidebarNav() {
                 className={
                   "block rounded-lg px-3 py-2 text-sm transition " +
                   (active
-                    ? "bg-slate-900 text-slate-50"
-                    : "text-slate-300 hover:bg-slate-900/60 hover:text-slate-50")
+                    ? "bg-[var(--panel)] text-[var(--text)]"
+                    : "text-[var(--muted)] hover:bg-[var(--panel)] hover:text-[var(--text)]")
                 }
               >
                 {item.label}
@@ -43,12 +43,12 @@ export default function SidebarNav() {
           })}
         </nav>
 
-        <div className="mt-8 rounded-xl border border-slate-900 bg-slate-950 p-3">
-          <div className="text-xs text-slate-400">North Star</div>
-          <div className="mt-1 text-sm font-semibold text-slate-100">
+        <div className="mt-8 rounded-xl border border-[var(--border)] bg-[var(--panelSolid)] p-3">
+          <div className="text-xs text-[var(--muted2)]">North Star</div>
+          <div className="mt-1 text-sm font-semibold text-[var(--text)]">
             Cash Collected (30D)
           </div>
-          <div className="mt-2 text-xs text-slate-500">Volume negates luck.</div>
+          <div className="mt-2 text-xs text-[var(--muted3)]">Volume negates luck.</div>
         </div>
       </div>
     </aside>

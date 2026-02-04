@@ -8,20 +8,20 @@ type Props = {
 export default function KpiCard({ label, value, hint, tone = "neutral" }: Props) {
   const toneClass =
     tone === "good"
-      ? "border-emerald-500/25 bg-emerald-500/5"
+      ? "border-[color:color-mix(in_oklab,var(--good),transparent_75%)] bg-[color:color-mix(in_oklab,var(--good),transparent_92%)]"
       : tone === "warn"
-      ? "border-amber-500/25 bg-amber-500/5"
+      ? "border-[color:color-mix(in_oklab,var(--warn),transparent_75%)] bg-[color:color-mix(in_oklab,var(--warn),transparent_92%)]"
       : tone === "bad"
-      ? "border-rose-500/25 bg-rose-500/5"
-      : "border-slate-800 bg-slate-900/40";
+      ? "border-[color:color-mix(in_oklab,var(--bad),transparent_75%)] bg-[color:color-mix(in_oklab,var(--bad),transparent_92%)]"
+      : "border-[var(--border)] bg-[var(--panel)]";
 
   return (
     <div className={`rounded-2xl border p-5 ${toneClass}`}>
-      <div className="text-sm text-slate-300">{label}</div>
-      <div className="mt-2 text-2xl font-semibold tracking-tight text-slate-50">
+      <div className="text-sm text-[var(--muted)]">{label}</div>
+      <div className="mt-2 text-2xl font-semibold tracking-tight text-[var(--text)]">
         {value}
       </div>
-      {hint ? <div className="mt-2 text-xs text-slate-400">{hint}</div> : null}
+      {hint ? <div className="mt-2 text-xs text-[var(--muted2)]">{hint}</div> : null}
     </div>
   );
 }

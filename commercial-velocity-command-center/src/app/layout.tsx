@@ -14,8 +14,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-slate-950 text-slate-50">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(() => { try { const t = localStorage.getItem('cvcc.theme') || 'dark'; document.documentElement.dataset.theme = t; } catch (e) {} })();`,
+          }}
+        />
+      </head>
+      <body className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
         <TopBar />
         <div className="mx-auto flex max-w-6xl">
           <SidebarNav />

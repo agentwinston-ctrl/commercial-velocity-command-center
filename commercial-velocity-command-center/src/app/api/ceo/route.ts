@@ -79,58 +79,24 @@ async function sumNetChargesSince(unixGte: number) {
   return { net: gross - refunded };
 }
 
-async function getMRR() {
-  const subs = await paginate("/v1/subscriptions", {
-    status: "active",
-    "expand[]": "data.items.data.price",
-  });
-
-  let mrrCents = 0;
-  for (const s of subs) {
-    for (const item of s.items?.data || []) {
-      mrrCents += monthlyEquivalent(item.price, item.quantity || 1);
-    }
-  }
-
-  const mStart = monthStartUnix();
-  const newClientsMtd = subs.filter((s) => (s.created || 0) >= mStart).length;
-
-  // activeClients here means active subscriptions count (what Devon wants to see).
-  return { mrrCents, activeSubs: subs.length, newClientsMtd };
-}
-
-async function churnPct30d(activeSubs: number) {
-  const since = nowUnix() - 30 * 24 * 60 * 60;
-  const canceled = await paginate("/v1/subscriptions", { status: "canceled" });
-  const recentCanceled = canceled.filter((s) => (s.canceled_at || 0) >= since);
-  const canceledCount = recentCanceled.length;
-  const denom = activeSubs + canceledCount;
-  const churn = denom > 0 ? canceledCount / denom : 0;
-  return churn * 100;
-}
+// MRR intentionally removed for now. Stripe subscription states (pause vs cancel)
+// can inflate MRR and distract from the real North Star.
 
 export async function GET() {
   try {
     const sevenDaysGte = nowUnix() - 7 * 24 * 60 * 60;
     const monthGte = monthStartUnix();
 
-    const [{ net: net7 }, { net: netMtd }, mrr] = await Promise.all([
+    const [{ net: net7 }, { net: netMtd }] = await Promise.all([
       sumNetChargesSince(sevenDaysGte),
       sumNetChargesSince(monthGte),
-      getMRR(),
     ]);
-
-    const churn30 = await churnPct30d(mrr.activeSubs);
 
     return NextResponse.json({
       connected: true,
-      mrr: Math.round(mrr.mrrCents / 100),
-      mrrTarget: 100000,
       cash7d: Math.round(net7 / 100),
       cashMtd: Math.round(netMtd / 100),
-      churn30dPct: Math.round(churn30 * 10) / 10,
-      activeSubs: mrr.activeSubs,
-      newSubsMtd: mrr.newClientsMtd,
+      cashTargetMonthly: 150000,
       // Pipeline metrics will be added once GHL automation is wired in.
     });
   } catch (e: any) {
@@ -138,13 +104,9 @@ export async function GET() {
     if (msg === "STRIPE_NOT_CONNECTED") {
       return NextResponse.json({
         connected: false,
-        mrr: 0,
-        mrrTarget: 100000,
         cash7d: 0,
         cashMtd: 0,
-        churn30dPct: 0,
-        activeSubs: 0,
-        newSubsMtd: 0,
+        cashTargetMonthly: 150000,
         warning: "Stripe not connected. Add STRIPE_SECRET_KEY in Vercel env vars.",
       });
     }

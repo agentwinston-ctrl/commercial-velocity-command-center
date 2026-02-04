@@ -40,13 +40,9 @@ async function getMetrics() {
     if (!contentType.includes("application/json")) {
       return {
         connected: false,
-        mrr: 0,
-        mrrTarget: 100000,
         cash7d: 0,
         cashMtd: 0,
-        churn30dPct: 0,
-        activeSubs: 0,
-        newSubsMtd: 0,
+        cashTargetMonthly: 150000,
         warning:
           "Dashboard is behind Vercel login (deployment protection). Make the project public or add your Vercel user to the team.",
       };
@@ -58,13 +54,9 @@ async function getMetrics() {
       return {
         connected: true,
         error: data?.error || "Failed to load metrics",
-        mrr: 0,
-        mrrTarget: 100000,
         cash7d: 0,
         cashMtd: 0,
-        churn30dPct: 0,
-        activeSubs: 0,
-        newSubsMtd: 0,
+        cashTargetMonthly: 150000,
       };
     }
 
@@ -72,24 +64,16 @@ async function getMetrics() {
       connected: boolean;
       warning?: string;
       error?: string;
-      mrr: number;
-      mrrTarget: number;
       cash7d: number;
       cashMtd: number;
-      churn30dPct: number;
-      activeSubs: number;
-      newSubsMtd: number;
+      cashTargetMonthly: number;
     };
   } catch {
     return {
       connected: false,
-      mrr: 0,
-      mrrTarget: 100000,
       cash7d: 0,
       cashMtd: 0,
-      churn30dPct: 0,
-      activeSubs: 0,
-      newSubsMtd: 0,
+      cashTargetMonthly: 150000,
       warning:
         "Dashboard is behind Vercel login (deployment protection). Make the project public or add your Vercel user to the team.",
     };
@@ -99,14 +83,10 @@ async function getMetrics() {
 export default async function CEOPage() {
   const metrics = await getMetrics();
 
-  const mrr = metrics.mrr;
-  const mrrTarget = metrics.mrrTarget;
   const cash7 = metrics.cash7d;
   const cashMtd = metrics.cashMtd;
-  const churn30 = metrics.churn30dPct;
+  const cashTargetMonthly = metrics.cashTargetMonthly || 150000;
 
-  const activeSubs = metrics.activeSubs;
-  const newSubsMtd = metrics.newSubsMtd;
   const atRiskClients = "";
 
   // Pipeline placeholders until GHL is wired.
@@ -133,7 +113,7 @@ export default async function CEOPage() {
     return { label: "Leads", action: "Push outbound volume today." };
   })();
 
-  const mrrProgress = progressPct(mrr, mrrTarget);
+  // Cash is the only North Star.
 
   return (
     <div>
@@ -141,7 +121,7 @@ export default async function CEOPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">CEO Dashboard</h1>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            One screen. North Star: <span className="font-semibold">$100k MRR</span>. No ceiling.
+            One screen. North Star: <span className="font-semibold">$150k cash collected per month</span>. No ceiling.
           </p>
         </div>
       </div>
@@ -160,26 +140,33 @@ export default async function CEOPage() {
         ) : null}
 
         <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <KpiCard label="MRR" value={`${money(mrr)} / ${money(mrrTarget)}`} tone={toneFromPct(mrrProgress / 100, 0.8, 0.5)} />
-          <KpiCard label="Cash Collected (7D)" value={money(cash7)} tone={cash7 >= 5000 ? "good" : cash7 >= 2500 ? "warn" : "bad"} />
-          <KpiCard label="Cash Collected (MTD)" value={money(cashMtd)} tone={cashMtd >= 50000 ? "good" : cashMtd >= 30000 ? "warn" : "bad"} />
-          <KpiCard label="Churn (30D)" value={`${churn30.toFixed(1)}%`} tone={toneFromUnder(churn30, 5, 10)} />
+          <KpiCard
+            label="Cash Collected (MTD)"
+            value={`${money(cashMtd)} / ${money(cashTargetMonthly)}`}
+            tone={toneFromPct(progressPct(cashMtd, cashTargetMonthly) / 100, 0.8, 0.5)}
+          />
+          <KpiCard label="Cash Collected (7D)" value={money(cash7)} tone={cash7 >= 15000 ? "good" : cash7 >= 7500 ? "warn" : "bad"} />
+          <KpiCard label="Cash Remaining (MTD)" value={money(Math.max(0, cashTargetMonthly - cashMtd))} tone={cashMtd >= cashTargetMonthly ? "good" : "warn"} />
+          <KpiCard label="Stripe Status" value={metrics.connected ? "Connected" : "Not Connected"} tone={metrics.connected ? "good" : "bad"} />
         </div>
 
         <div className="mt-5">
           <div className="flex items-center justify-between text-xs text-[var(--muted2)]">
-            <div>MRR Progress</div>
-            <div>{mrrProgress.toFixed(0)}%</div>
+            <div>Cash Progress (MTD)</div>
+            <div>{progressPct(cashMtd, cashTargetMonthly).toFixed(0)}%</div>
           </div>
           <div className="mt-2 h-3 w-full overflow-hidden rounded-full border border-[var(--border)] bg-[var(--panelSolid)]">
-            <div className="h-full rounded-full bg-[var(--good)]" style={{ width: `${mrrProgress}%` }} />
+            <div
+              className="h-full rounded-full bg-[var(--good)]"
+              style={{ width: `${progressPct(cashMtd, cashTargetMonthly)}%` }}
+            />
           </div>
         </div>
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Active Subs" value={String(activeSubs)} />
-        <KpiCard label="New Subs (MTD)" value={String(newSubsMtd)} />
+        <KpiCard label="Cash Target" value={money(cashTargetMonthly)} hint="Monthly. Simple." />
+        <KpiCard label="Cash MTD" value={money(cashMtd)} tone={cashMtd >= cashTargetMonthly ? "good" : cashMtd >= cashTargetMonthly * 0.5 ? "warn" : "bad"} />
         <KpiCard label="At-risk Clients" value={atRiskClients ? atRiskClients : "—"} tone={atRiskClients ? "warn" : "neutral"} hint="(Manual for now)" />
         <KpiCard label="Target" value="Grand Slam only" hint="Up-market, capacity, sales process." />
       </div>

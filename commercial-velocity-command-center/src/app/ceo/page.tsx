@@ -25,12 +25,57 @@ function progressPct(current: number, target: number) {
 }
 
 async function getMetrics() {
-  const res = await fetch("/api/ceo", { cache: "no-store" });
-  const data = await res.json();
-  if (!res.ok) {
+  try {
+    const res = await fetch("/api/ceo", { cache: "no-store" });
+
+    // If deployment protection redirects to HTML, JSON parsing will throw.
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      return {
+        connected: false,
+        mrr: 0,
+        mrrTarget: 100000,
+        cash7d: 0,
+        cash30d: 0,
+        churn30dPct: 0,
+        activeClients: 0,
+        newClientsMtd: 0,
+        warning:
+          "Dashboard is behind Vercel login (deployment protection). Make the project public or add your Vercel user to the team.",
+      };
+    }
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      return {
+        connected: true,
+        error: data?.error || "Failed to load metrics",
+        mrr: 0,
+        mrrTarget: 100000,
+        cash7d: 0,
+        cash30d: 0,
+        churn30dPct: 0,
+        activeClients: 0,
+        newClientsMtd: 0,
+      };
+    }
+
+    return data as {
+      connected: boolean;
+      warning?: string;
+      error?: string;
+      mrr: number;
+      mrrTarget: number;
+      cash7d: number;
+      cash30d: number;
+      churn30dPct: number;
+      activeClients: number;
+      newClientsMtd: number;
+    };
+  } catch {
     return {
-      connected: true,
-      error: data?.error || "Failed to load metrics",
+      connected: false,
       mrr: 0,
       mrrTarget: 100000,
       cash7d: 0,
@@ -38,20 +83,10 @@ async function getMetrics() {
       churn30dPct: 0,
       activeClients: 0,
       newClientsMtd: 0,
+      warning:
+        "Dashboard is behind Vercel login (deployment protection). Make the project public or add your Vercel user to the team.",
     };
   }
-  return data as {
-    connected: boolean;
-    warning?: string;
-    error?: string;
-    mrr: number;
-    mrrTarget: number;
-    cash7d: number;
-    cash30d: number;
-    churn30dPct: number;
-    activeClients: number;
-    newClientsMtd: number;
-  };
 }
 
 export default async function CEOPage() {

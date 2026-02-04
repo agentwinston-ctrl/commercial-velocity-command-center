@@ -1,26 +1,23 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-
-const STORAGE_KEY = "cvcc.ruleOf100.count";
+import { getNumber, getTodayKey, setNumber } from "@/components/storage";
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
 export default function RuleOf100Card() {
+  const key = useMemo(() => getTodayKey("cvcc.ruleOf100"), []);
   const [count, setCount] = useState<number>(0);
 
   useEffect(() => {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const n = Number(raw);
-    if (Number.isFinite(n)) setCount(clamp(n, 0, 1000));
-  }, []);
+    setCount(clamp(getNumber(key, 0), 0, 1000));
+  }, [key]);
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, String(count));
-  }, [count]);
+    setNumber(key, count);
+  }, [key, count]);
 
   const pct = useMemo(() => clamp((count / 100) * 100, 0, 100), [count]);
   const status = count >= 100 ? "GREEN" : "RED";
@@ -76,14 +73,11 @@ export default function RuleOf100Card() {
             Reset
           </button>
 
-          <div className="ml-auto text-xs text-slate-400">
-            Volume negates luck.
-          </div>
+          <div className="ml-auto text-xs text-slate-400">Volume negates luck.</div>
         </div>
 
         <p className="mt-3 text-xs text-slate-400">
-          Count this however you want (DMs, calls, ad spend actions). The only
-          rule: hit 100.
+          Resets daily automatically.
         </p>
       </div>
     </div>

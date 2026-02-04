@@ -16,6 +16,6 @@ Include: outcome, learning, or next step if relevant.
 
 *Team activated. Let's get it.*
 
-**WINSTON** — Built the CRE Operating System folder (scoreboard + weekly/monthly/quarterly templates) and linked it from `goals.md`. Next: automate Stripe revenue pulls (waiting on restricted read-only key in `.env`).
+**WINSTON** — Built the CRE Operating System folder (scoreboard + weekly/monthly/quarterly templates), automated Stripe → scoreboard (`scripts/stripe_pull_scoreboard.mjs`), and built a dark-mode CEO dashboard in the Command Center that reads the scoreboard + weekly priorities. Next: automate GHL pipeline metrics into the scoreboard so constraint + funnel are real-time.
 
 ---

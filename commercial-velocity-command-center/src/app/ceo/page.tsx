@@ -1,5 +1,5 @@
 import KpiCard from "@/components/KpiCard";
-import { num, readLatestScoreboardRow, readThisWeekPriorities } from "@/lib/os";
+import { readThisWeekPriorities } from "@/lib/os";
 
 function toneFromPct(value: number, good: number, warn: number) {
   if (!Number.isFinite(value)) return "neutral" as const;
@@ -24,26 +24,44 @@ function progressPct(current: number, target: number) {
   return Math.max(0, Math.min(100, (current / target) * 100));
 }
 
-export default function CEOPage() {
-  const row = readLatestScoreboardRow();
+async function getMetrics() {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/ceo`, {
+    cache: "no-store",
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || "Failed to load metrics");
+  return data as {
+    mrr: number;
+    mrrTarget: number;
+    cash7d: number;
+    cash30d: number;
+    churn30dPct: number;
+    activeClients: number;
+    newClientsMtd: number;
+  };
+}
 
-  const mrr = num(row, "mrr");
-  const mrrTarget = num(row, "mrr_target", 100000);
-  const cash7 = num(row, "cash_collected_7d");
-  const cash30 = num(row, "cash_collected_30d");
-  const churn30 = num(row, "churn_pct_30d");
+export default async function CEOPage() {
+  const metrics = await getMetrics();
 
-  const activeClients = num(row, "active_clients");
-  const newClientsMtd = num(row, "new_clients_mtd");
-  const atRiskClients = (row?.at_risk_clients || "").trim();
+  const mrr = metrics.mrr;
+  const mrrTarget = metrics.mrrTarget;
+  const cash7 = metrics.cash7d;
+  const cash30 = metrics.cash30d;
+  const churn30 = metrics.churn30dPct;
 
-  const leadsIn = num(row, "new_leads");
-  const booked = num(row, "booked_calls");
-  const showed = num(row, "showed_calls");
-  const offers = num(row, "offers_made");
-  const closed = num(row, "deals_closed");
+  const activeClients = metrics.activeClients;
+  const newClientsMtd = metrics.newClientsMtd;
+  const atRiskClients = "";
 
-  const speedToLead = num(row, "median_speed_to_lead_min");
+  // Pipeline placeholders until GHL is wired.
+  const leadsIn = 0;
+  const booked = 0;
+  const showed = 0;
+  const offers = 0;
+  const closed = 0;
+
+  const speedToLead = Number.NaN;
 
   const bookingRate = leadsIn > 0 ? booked / leadsIn : 0;
   const showRate = booked > 0 ? showed / booked : 0;
@@ -53,12 +71,11 @@ export default function CEOPage() {
   const priorities = readThisWeekPriorities();
 
   const constraint = (() => {
-    // Order matters.
-    if (speedToLead > 5) return { label: "Speed-to-lead", action: "Fix response time under 5 minutes." };
+    if (Number.isFinite(speedToLead) && speedToLead > 5) return { label: "Speed-to-lead", action: "Fix response time under 5 minutes." };
     if (leadsIn > 0 && bookingRate < 0.2) return { label: "Booking rate", action: "Tighten qualification + follow-up to convert leads into booked calls." };
     if (booked > 0 && showRate < 0.7) return { label: "Show rate", action: "Add confirmations, reminders, and reschedule flow." };
     if (showed > 0 && closeRate < 0.25) return { label: "Close rate", action: "Sharpen offer + sales script. Run follow-ups." };
-    return { label: "None", action: "Keep volume. Don’t get cute." };
+    return { label: "Leads", action: "Push outbound volume today." };
   })();
 
   const mrrProgress = progressPct(mrr, mrrTarget);
@@ -74,11 +91,10 @@ export default function CEOPage() {
         </div>
       </div>
 
-      {/* REVENUE */}
       <div className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold text-[var(--muted)]">REVENUE</div>
-          <div className="text-xs text-[var(--muted2)]">Source: Stripe + scoreboard</div>
+          <div className="text-xs text-[var(--muted2)]">Source: Stripe</div>
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
@@ -94,63 +110,37 @@ export default function CEOPage() {
             <div>{mrrProgress.toFixed(0)}%</div>
           </div>
           <div className="mt-2 h-3 w-full overflow-hidden rounded-full border border-[var(--border)] bg-[var(--panelSolid)]">
-            <div
-              className="h-full rounded-full bg-[var(--good)]"
-              style={{ width: `${mrrProgress}%` }}
-            />
+            <div className="h-full rounded-full bg-[var(--good)]" style={{ width: `${mrrProgress}%` }} />
           </div>
         </div>
       </div>
 
-      {/* CLIENTS */}
       <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Active Clients" value={String(activeClients)} tone={activeClients >= 20 ? "good" : activeClients >= 12 ? "warn" : "neutral"} />
-        <KpiCard label="New Clients (MTD)" value={String(newClientsMtd)} tone={newClientsMtd >= 5 ? "good" : newClientsMtd >= 2 ? "warn" : "neutral"} />
+        <KpiCard label="Active Clients" value={String(activeClients)} />
+        <KpiCard label="New Clients (MTD)" value={String(newClientsMtd)} />
         <KpiCard label="At-risk Clients" value={atRiskClients ? atRiskClients : "—"} tone={atRiskClients ? "warn" : "neutral"} hint="(Manual for now)" />
         <KpiCard label="Target" value="Grand Slam only" hint="Up-market, capacity, sales process." />
       </div>
 
-      {/* PIPELINE FUNNEL */}
       <div className="mt-10">
         <div className="text-sm font-semibold text-[var(--muted)]">PIPELINE (weekly)</div>
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-5">
-          <KpiCard label="Leads In" value={String(leadsIn || 0)} tone={leadsIn >= 25 ? "good" : leadsIn >= 10 ? "warn" : "bad"} />
-          <KpiCard label="Calls Booked" value={String(booked || 0)} tone={toneFromPct(bookingRate, 0.25, 0.15)} hint={`Booking rate: ${(bookingRate * 100).toFixed(0)}%`} />
-          <KpiCard label="Shows" value={String(showed || 0)} tone={toneFromPct(showRate, 0.75, 0.6)} hint={`Show rate: ${(showRate * 100).toFixed(0)}%`} />
-          <KpiCard label="Offers" value={String(offers || 0)} tone={offers >= 5 ? "good" : offers >= 2 ? "warn" : "neutral"} />
-          <KpiCard label="Closed" value={String(closed || 0)} tone={toneFromPct(closeRate, 0.35, 0.25)} hint={`Close rate: ${(closeRate * 100).toFixed(0)}%`} />
+          <KpiCard label="Leads In" value={String(leadsIn)} tone={"warn"} hint="Wire GHL next" />
+          <KpiCard label="Calls Booked" value={String(booked)} tone={"warn"} />
+          <KpiCard label="Shows" value={String(showed)} tone={"warn"} />
+          <KpiCard label="Offers" value={String(offers)} tone={"warn"} />
+          <KpiCard label="Closed" value={String(closed)} tone={"warn"} />
         </div>
       </div>
 
-      {/* VELOCITY METRICS */}
-      <div className="mt-10">
-        <div className="text-sm font-semibold text-[var(--muted)]">VELOCITY METRICS</div>
-        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <KpiCard label="Speed to Lead (median)" value={speedToLead ? `${speedToLead.toFixed(1)} min` : "MISSING"} tone={speedToLead ? toneFromUnder(speedToLead, 5, 10) : "bad"} hint="Target under 5 min." />
-          <KpiCard label="Show Rate" value={`${(showRate * 100).toFixed(0)}%`} tone={toneFromPct(showRate, 0.75, 0.6)} />
-          <KpiCard label="Close Rate" value={`${(closeRate * 100).toFixed(0)}%`} tone={toneFromPct(closeRate, 0.35, 0.25)} />
-          <KpiCard label="Cash per Call" value={showed ? money(cashPerCall) : "—"} tone={cashPerCall >= 1500 ? "good" : cashPerCall >= 800 ? "warn" : "neutral"} />
-        </div>
-      </div>
-
-      {/* THE CONSTRAINT */}
       <div className="mt-10 rounded-2xl border border-[color:color-mix(in_oklab,var(--bad),transparent_70%)] bg-[color:color-mix(in_oklab,var(--bad),transparent_93%)] p-5">
         <div className="text-sm font-semibold">THE CONSTRAINT</div>
         <div className="mt-1 text-2xl font-semibold tracking-tight">{constraint.label}</div>
         <div className="mt-2 text-sm text-[var(--muted)]">{constraint.action}</div>
       </div>
 
-      {/* THIS WEEK */}
       <div className="mt-10 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-sm font-semibold text-[var(--muted)]">THIS WEEK’S PRIORITIES</div>
-            <div className="mt-1 text-xs text-[var(--muted2)]">
-              {priorities.weekOf ? `Week of ${priorities.weekOf}` : "Update in mission-control/operating-system/weekly/this-week.md"}
-            </div>
-          </div>
-        </div>
-
+        <div className="text-sm font-semibold text-[var(--muted)]">THIS WEEK’S PRIORITIES</div>
         <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
             <ol className="space-y-2 text-sm text-[var(--text)]">
@@ -166,11 +156,9 @@ export default function CEOPage() {
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--panelSolid)] p-4">
             <div className="text-xs font-semibold text-[var(--muted2)]">One thing to attack today</div>
             <div className="mt-2 text-lg font-semibold">
-              {priorities.todayFocus ? priorities.todayFocus : constraint.label === "None" ? "More outbound. More volume." : constraint.action}
+              {priorities.todayFocus ? priorities.todayFocus : constraint.action}
             </div>
-            <div className="mt-2 text-sm text-[var(--muted2)]">
-              Rule: attack the constraint first. Then scale.
-            </div>
+            <div className="mt-2 text-sm text-[var(--muted2)]">Rule: attack the constraint first. Then scale.</div>
           </div>
         </div>
       </div>

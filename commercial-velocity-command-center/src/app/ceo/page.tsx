@@ -43,10 +43,10 @@ async function getMetrics() {
         mrr: 0,
         mrrTarget: 100000,
         cash7d: 0,
-        cash30d: 0,
+        cashMtd: 0,
         churn30dPct: 0,
-        activeClients: 0,
-        newClientsMtd: 0,
+        activeSubs: 0,
+        newSubsMtd: 0,
         warning:
           "Dashboard is behind Vercel login (deployment protection). Make the project public or add your Vercel user to the team.",
       };
@@ -61,10 +61,10 @@ async function getMetrics() {
         mrr: 0,
         mrrTarget: 100000,
         cash7d: 0,
-        cash30d: 0,
+        cashMtd: 0,
         churn30dPct: 0,
-        activeClients: 0,
-        newClientsMtd: 0,
+        activeSubs: 0,
+        newSubsMtd: 0,
       };
     }
 
@@ -75,10 +75,10 @@ async function getMetrics() {
       mrr: number;
       mrrTarget: number;
       cash7d: number;
-      cash30d: number;
+      cashMtd: number;
       churn30dPct: number;
-      activeClients: number;
-      newClientsMtd: number;
+      activeSubs: number;
+      newSubsMtd: number;
     };
   } catch {
     return {
@@ -86,10 +86,10 @@ async function getMetrics() {
       mrr: 0,
       mrrTarget: 100000,
       cash7d: 0,
-      cash30d: 0,
+      cashMtd: 0,
       churn30dPct: 0,
-      activeClients: 0,
-      newClientsMtd: 0,
+      activeSubs: 0,
+      newSubsMtd: 0,
       warning:
         "Dashboard is behind Vercel login (deployment protection). Make the project public or add your Vercel user to the team.",
     };
@@ -102,11 +102,11 @@ export default async function CEOPage() {
   const mrr = metrics.mrr;
   const mrrTarget = metrics.mrrTarget;
   const cash7 = metrics.cash7d;
-  const cash30 = metrics.cash30d;
+  const cashMtd = metrics.cashMtd;
   const churn30 = metrics.churn30dPct;
 
-  const activeClients = metrics.activeClients;
-  const newClientsMtd = metrics.newClientsMtd;
+  const activeSubs = metrics.activeSubs;
+  const newSubsMtd = metrics.newSubsMtd;
   const atRiskClients = "";
 
   // Pipeline placeholders until GHL is wired.
@@ -162,7 +162,7 @@ export default async function CEOPage() {
         <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
           <KpiCard label="MRR" value={`${money(mrr)} / ${money(mrrTarget)}`} tone={toneFromPct(mrrProgress / 100, 0.8, 0.5)} />
           <KpiCard label="Cash Collected (7D)" value={money(cash7)} tone={cash7 >= 5000 ? "good" : cash7 >= 2500 ? "warn" : "bad"} />
-          <KpiCard label="Cash Collected (30D)" value={money(cash30)} tone={cash30 >= 50000 ? "good" : cash30 >= 30000 ? "warn" : "bad"} />
+          <KpiCard label="Cash Collected (MTD)" value={money(cashMtd)} tone={cashMtd >= 50000 ? "good" : cashMtd >= 30000 ? "warn" : "bad"} />
           <KpiCard label="Churn (30D)" value={`${churn30.toFixed(1)}%`} tone={toneFromUnder(churn30, 5, 10)} />
         </div>
 
@@ -178,8 +178,8 @@ export default async function CEOPage() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Active Clients" value={String(activeClients)} />
-        <KpiCard label="New Clients (MTD)" value={String(newClientsMtd)} />
+        <KpiCard label="Active Subs" value={String(activeSubs)} />
+        <KpiCard label="New Subs (MTD)" value={String(newSubsMtd)} />
         <KpiCard label="At-risk Clients" value={atRiskClients ? atRiskClients : "—"} tone={atRiskClients ? "warn" : "neutral"} hint="(Manual for now)" />
         <KpiCard label="Target" value="Grand Slam only" hint="Up-market, capacity, sales process." />
       </div>

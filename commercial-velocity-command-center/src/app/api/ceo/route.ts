@@ -64,9 +64,8 @@ function monthlyEquivalent(price: any, quantity: number) {
   return 0;
 }
 
-async function sumNetChargesSince(secondsAgo: number) {
-  const gte = nowUnix() - secondsAgo;
-  const charges = await paginate("/v1/charges", { "created[gte]": gte });
+async function sumNetChargesSince(unixGte: number) {
+  const charges = await paginate("/v1/charges", { "created[gte]": unixGte });
 
   let gross = 0;
   let refunded = 0;
@@ -96,41 +95,42 @@ async function getMRR() {
   const mStart = monthStartUnix();
   const newClientsMtd = subs.filter((s) => (s.created || 0) >= mStart).length;
 
-  return { mrrCents, activeClients: subs.length, newClientsMtd };
+  // activeClients here means active subscriptions count (what Devon wants to see).
+  return { mrrCents, activeSubs: subs.length, newClientsMtd };
 }
 
-async function churnPct30d(activeClients: number) {
+async function churnPct30d(activeSubs: number) {
   const since = nowUnix() - 30 * 24 * 60 * 60;
   const canceled = await paginate("/v1/subscriptions", { status: "canceled" });
   const recentCanceled = canceled.filter((s) => (s.canceled_at || 0) >= since);
   const canceledCount = recentCanceled.length;
-  const denom = activeClients + canceledCount;
+  const denom = activeSubs + canceledCount;
   const churn = denom > 0 ? canceledCount / denom : 0;
   return churn * 100;
 }
 
 export async function GET() {
   try {
-    const sevenDays = 7 * 24 * 60 * 60;
-    const thirtyDays = 30 * 24 * 60 * 60;
+    const sevenDaysGte = nowUnix() - 7 * 24 * 60 * 60;
+    const monthGte = monthStartUnix();
 
-    const [{ net: net7 }, { net: net30 }, mrr] = await Promise.all([
-      sumNetChargesSince(sevenDays),
-      sumNetChargesSince(thirtyDays),
+    const [{ net: net7 }, { net: netMtd }, mrr] = await Promise.all([
+      sumNetChargesSince(sevenDaysGte),
+      sumNetChargesSince(monthGte),
       getMRR(),
     ]);
 
-    const churn30 = await churnPct30d(mrr.activeClients);
+    const churn30 = await churnPct30d(mrr.activeSubs);
 
     return NextResponse.json({
       connected: true,
       mrr: Math.round(mrr.mrrCents / 100),
       mrrTarget: 100000,
       cash7d: Math.round(net7 / 100),
-      cash30d: Math.round(net30 / 100),
+      cashMtd: Math.round(netMtd / 100),
       churn30dPct: Math.round(churn30 * 10) / 10,
-      activeClients: mrr.activeClients,
-      newClientsMtd: mrr.newClientsMtd,
+      activeSubs: mrr.activeSubs,
+      newSubsMtd: mrr.newClientsMtd,
       // Pipeline metrics will be added once GHL automation is wired in.
     });
   } catch (e: any) {
@@ -141,10 +141,10 @@ export async function GET() {
         mrr: 0,
         mrrTarget: 100000,
         cash7d: 0,
-        cash30d: 0,
+        cashMtd: 0,
         churn30dPct: 0,
-        activeClients: 0,
-        newClientsMtd: 0,
+        activeSubs: 0,
+        newSubsMtd: 0,
         warning: "Stripe not connected. Add STRIPE_SECRET_KEY in Vercel env vars.",
       });
     }

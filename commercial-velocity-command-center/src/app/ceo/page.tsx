@@ -24,9 +24,16 @@ function progressPct(current: number, target: number) {
   return Math.max(0, Math.min(100, (current / target) * 100));
 }
 
+import { headers } from "next/headers";
+
 async function getMetrics() {
   try {
-    const res = await fetch("/api/ceo", { cache: "no-store" });
+    const h = await headers();
+    const host = h.get("x-forwarded-host") || h.get("host");
+    const proto = h.get("x-forwarded-proto") || "https";
+    const base = host ? `${proto}://${host}` : "";
+
+    const res = await fetch(`${base}/api/ceo`, { cache: "no-store" });
 
     // If deployment protection redirects to HTML, JSON parsing will throw.
     const contentType = res.headers.get("content-type") || "";

@@ -130,6 +130,13 @@ function monthlyEquivalentFromPrice(price, quantity = 1) {
   return 0;
 }
 
+function monthStartUnix(date = new Date()) {
+  const d = new Date(date);
+  d.setDate(1);
+  d.setHours(0, 0, 0, 0);
+  return Math.floor(d.getTime() / 1000);
+}
+
 async function getMRR() {
   const subs = await paginateList('/v1/subscriptions', {
     status: 'active',
@@ -142,7 +149,11 @@ async function getMRR() {
       mrrCents += monthlyEquivalentFromPrice(item.price, item.quantity || 1);
     }
   }
-  return { mrrCents, activeSubs: subs.length };
+
+  const mStart = monthStartUnix();
+  const newClientsMtd = subs.filter((s) => (s.created || 0) >= mStart).length;
+
+  return { mrrCents, activeSubs: subs.length, newClientsMtd };
 }
 
 async function getChurn30d(activeSubsCount) {
@@ -210,7 +221,7 @@ async function main() {
     sumNetChargesSince(thirtyDays),
   ]);
 
-  const { mrrCents, activeSubs } = await getMRR();
+  const { mrrCents, activeSubs, newClientsMtd } = await getMRR();
   const { churn } = await getChurn30d(activeSubs);
 
   const scoreboardPath = path.join(workspaceDir, 'mission-control/operating-system/scoreboard/scoreboard.csv');
@@ -220,8 +231,10 @@ async function main() {
     cash_collected_7d: dollars(net7),
     cash_collected_30d: dollars(net30),
     mrr: dollars(mrrCents),
+    mrr_target: 100000,
     churn_pct_30d: pct(churn),
     active_clients: activeSubs,
+    new_clients_mtd: newClientsMtd,
     notes: `Stripe automated ${new Date().toISOString().slice(0,10)}`,
   });
 

@@ -1,2 +1,2 @@
-date_week_start,cash_collected_7d,cash_collected_30d,mrr,churn_pct_30d,active_clients,new_leads,total_leads_by_source,median_speed_to_lead_min,booked_calls,showed_calls,offers_made,deals_closed,close_rate_pct,booking_rate_pct,show_rate_pct,cash_per_call,notes
-2026-02-02,2497,26223.42,88076,0,42,,,,,,,,,,,,Stripe automated 2026-02-04
+date_week_start,cash_collected_7d,cash_collected_30d,mrr,mrr_target,churn_pct_30d,active_clients,new_clients_mtd,at_risk_clients,new_leads,leads_by_source_json,median_speed_to_lead_min,booked_calls,showed_calls,offers_made,deals_closed,close_rate_pct,booking_rate_pct,show_rate_pct,cash_per_call,notes
+2026-02-02,2497,26223.42,88076,100000,0,42,0,,,,,,,,,,,,,Stripe automated 2026-02-04

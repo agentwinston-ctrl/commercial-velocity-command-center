@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 async function stripeFetch(endpoint: string, params: Record<string, string | number | undefined> = {}) {
   const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) throw new Error("Missing STRIPE_SECRET_KEY");
+  if (!key) throw new Error("STRIPE_NOT_CONNECTED");
 
   const url = new URL(`https://api.stripe.com${endpoint}`);
   for (const [k, v] of Object.entries(params)) {
@@ -123,6 +123,7 @@ export async function GET() {
     const churn30 = await churnPct30d(mrr.activeClients);
 
     return NextResponse.json({
+      connected: true,
       mrr: Math.round(mrr.mrrCents / 100),
       mrrTarget: 100000,
       cash7d: Math.round(net7 / 100),
@@ -133,8 +134,23 @@ export async function GET() {
       // Pipeline metrics will be added once GHL automation is wired in.
     });
   } catch (e: any) {
+    const msg = e?.message || "Unknown error";
+    if (msg === "STRIPE_NOT_CONNECTED") {
+      return NextResponse.json({
+        connected: false,
+        mrr: 0,
+        mrrTarget: 100000,
+        cash7d: 0,
+        cash30d: 0,
+        churn30dPct: 0,
+        activeClients: 0,
+        newClientsMtd: 0,
+        warning: "Stripe not connected. Add STRIPE_SECRET_KEY in Vercel env vars.",
+      });
+    }
+
     return NextResponse.json(
-      { error: e?.message || "Unknown error" },
+      { connected: true, error: msg },
       { status: 500 }
     );
   }

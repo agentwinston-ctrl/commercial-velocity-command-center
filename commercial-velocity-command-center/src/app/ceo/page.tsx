@@ -25,12 +25,25 @@ function progressPct(current: number, target: number) {
 }
 
 async function getMetrics() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/ceo`, {
-    cache: "no-store",
-  });
+  const res = await fetch("/api/ceo", { cache: "no-store" });
   const data = await res.json();
-  if (!res.ok) throw new Error(data?.error || "Failed to load metrics");
+  if (!res.ok) {
+    return {
+      connected: true,
+      error: data?.error || "Failed to load metrics",
+      mrr: 0,
+      mrrTarget: 100000,
+      cash7d: 0,
+      cash30d: 0,
+      churn30dPct: 0,
+      activeClients: 0,
+      newClientsMtd: 0,
+    };
+  }
   return data as {
+    connected: boolean;
+    warning?: string;
+    error?: string;
     mrr: number;
     mrrTarget: number;
     cash7d: number;
@@ -96,6 +109,13 @@ export default async function CEOPage() {
           <div className="text-sm font-semibold text-[var(--muted)]">REVENUE</div>
           <div className="text-xs text-[var(--muted2)]">Source: Stripe</div>
         </div>
+
+        {!metrics.connected ? (
+          <div className="mt-3 rounded-xl border border-[color:color-mix(in_oklab,var(--warn),transparent_70%)] bg-[color:color-mix(in_oklab,var(--warn),transparent_93%)] px-4 py-3 text-sm">
+            <div className="font-semibold">Stripe not connected</div>
+            <div className="mt-1 text-[var(--muted)]">Add <span className="font-mono">STRIPE_SECRET_KEY</span> in Vercel env vars, then redeploy.</div>
+          </div>
+        ) : null}
 
         <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
           <KpiCard label="MRR" value={`${money(mrr)} / ${money(mrrTarget)}`} tone={toneFromPct(mrrProgress / 100, 0.8, 0.5)} />

@@ -68,7 +68,7 @@ Devon is a player on this team, not just the boss. He executes.
 2.
 3.
 
-Link: See `mission-control/operating-system/templates/weekly-plan.md` for the template and `mission-control/operating-system/scoreboard/scoreboard.csv` for the scoreboard.
+Link: Update weekly priorities in `mission-control/operating-system/weekly/this-week.md`. Templates live at `mission-control/operating-system/templates/weekly-plan.md`. Scoreboard: `mission-control/operating-system/scoreboard/scoreboard.csv`.
 
 ---
 

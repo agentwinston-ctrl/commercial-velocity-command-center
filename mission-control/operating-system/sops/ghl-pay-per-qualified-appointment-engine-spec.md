@@ -76,10 +76,17 @@ Required calendar settings:
 
 ## Qualification Policy (enforceable)
 Use `memory/training/sales/cre-calendar-protection-policy.md` as baseline.
+
+### V1 defaults (until per-client overrides exist)
+- Service area: **150-mile radius from Columbus, OH**
+- Roof types accepted: **Flat/low-slope + metal**
+- Minimum size: **10,000+ sqft**
+
 Minimum to mark Qualified:
 - In service area
 - Commercial roofing (not residential)
-- Has an actual property/opportunity now (or within defined window)
+- Roof type fits (flat/low-slope or metal)
+- Size fits (10k+ sqft)
 - Decision maker path identified
 - Capacity alignment (client can handle)
 

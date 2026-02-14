@@ -19,6 +19,7 @@ export const AGENT_OS_DOCS: AgentOsDoc[] = [
   { id: "memory", title: "MEMORY", filename: "MEMORY.md" },
   { id: "agents", title: "AGENTS", filename: "AGENTS.md" },
   { id: "tools", title: "TOOLS", filename: "TOOLS.md" },
+  { id: "permissions", title: "PERMISSIONS", filename: "PERMISSIONS.md" },
   { id: "goals", title: "GOALS", filename: "goals.md" },
   { id: "activity", title: "ACTIVITY LOG", filename: "activity-log.md" },
   { id: "working", title: "WORKING", filename: "WORKING.md" },

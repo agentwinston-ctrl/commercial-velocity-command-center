@@ -24,6 +24,7 @@ export const AGENT_OS_DOCS: AgentOsDoc[] = [
   { id: "targets", title: "TARGETS & THRESHOLDS", filename: "TARGETS_AND_THRESHOLDS.md" },
   { id: "philosophy", title: "OPERATING PHILOSOPHY", filename: "OPERATING_PHILOSOPHY.md" },
   { id: "experiments", title: "EXPERIMENT ENGINE", filename: "EXPERIMENT_ENGINE.md" },
+  { id: "decision", title: "DECISION ENGINE", filename: "DECISION_ENGINE.md" },
   { id: "goals", title: "GOALS", filename: "goals.md" },
   { id: "activity", title: "ACTIVITY LOG", filename: "activity-log.md" },
   { id: "working", title: "WORKING", filename: "WORKING.md" },

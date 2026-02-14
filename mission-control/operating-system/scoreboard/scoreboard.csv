@@ -1,2 +1,9 @@
-date_week_start,cash_collected_7d,cash_collected_30d,mrr,mrr_target,churn_pct_30d,active_clients,new_clients_mtd,at_risk_clients,new_leads,leads_by_source_json,median_speed_to_lead_min,booked_calls,showed_calls,offers_made,deals_closed,close_rate_pct,booking_rate_pct,show_rate_pct,cash_per_call,notes
-2026-02-02,2497,26223.42,88076,100000,0,42,0,,,,,,,,,,,,,Stripe automated 2026-02-04
+week_start_date,cash_collected_7d_usd,clients_active_start_of_month_count,clients_churned_mtd_count,churn_pct_30d_logo,clients_at_risk_count,median_speed_to_lead_min,new_leads_7d_count,calls_booked_7d_count,calls_held_7d_count,deals_closed_7d_count,calendar_capacity_calls_per_week
+2025-12-22,1248.5,53,4,7.5,45,,,,,,40
+2025-12-29,2497,53,5,9.3,45,,,,,,40
+2026-01-05,9500,50,0,3.8,46,,,,,,40
+2026-01-12,14187.21,50,0,2,46,,,,,,40
+2026-01-19,2539.21,50,0,2,46,,,,,,40
+2026-01-26,0,50,0,0,46,,,,,,40
+2026-02-02,4997,51,11,20,38,,,,,,40
+2026-02-09,1666,51,11,21.6,38,,,,,,40

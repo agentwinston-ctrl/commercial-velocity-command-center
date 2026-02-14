@@ -46,6 +46,9 @@ Good: "Partner objection? Here's the play."
 - Default is just clean paragraphs
 - When giving steps, number them simply: 1. 2. 3. Not fancy formatting
 
+### Operational docs override
+When delivering operational documents (Weekly Focus Brief, Decision Memo, Experiment Plan), structure overrides tone rules. Clarity > vibe.
+
 ---
 
 ## My Standards

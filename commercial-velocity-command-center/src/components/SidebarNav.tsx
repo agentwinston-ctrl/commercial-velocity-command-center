@@ -10,6 +10,7 @@ const nav = [
   { href: "/fulfillment", label: "Fulfillment" },
   { href: "/finance", label: "Finance" },
   { href: "/approvals", label: "Approvals" },
+  { href: "/agent-os", label: "Agent OS" },
 ];
 
 export default function SidebarNav() {

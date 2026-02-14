@@ -31,6 +31,20 @@ const EXPECTED_COLS = [
   'calendar_capacity_calls_per_week',
 ];
 
+const NUMERIC_FIELDS = new Set([
+  'cash_collected_7d_usd',
+  'clients_active_start_of_month_count',
+  'clients_churned_mtd_count',
+  'churn_pct_30d_logo',
+  'clients_at_risk_count',
+  'median_speed_to_lead_min',
+  'new_leads_7d_count',
+  'calls_booked_7d_count',
+  'calls_held_7d_count',
+  'deals_closed_7d_count',
+  'calendar_capacity_calls_per_week',
+]);
+
 function loadDotEnv(dotEnvPath) {
   if (!fs.existsSync(dotEnvPath)) return;
   const raw = fs.readFileSync(dotEnvPath, 'utf8');
@@ -270,7 +284,7 @@ function ensureScoreboard(csvPath) {
   console.log(`Rewrote scoreboard header (backup at ${bak})`);
 }
 
-function upsertRow(csvPath, weekStartISO, patch) {
+function buildNextCSV(csvPath, weekStartISO, patch) {
   const raw = fs.readFileSync(csvPath, 'utf8');
   const lines = raw.trimEnd().split(/\r?\n/);
   const header = lines[0];
@@ -300,10 +314,68 @@ function upsertRow(csvPath, weekStartISO, patch) {
 
   if (!found) nextRows.push(make());
 
-  fs.writeFileSync(csvPath, [header, ...nextRows].join('\n') + '\n', 'utf8');
+  return [header, ...nextRows].join('\n') + '\n';
+}
+
+function validateScoreboardCSV(csvText) {
+  const lines = csvText.trimEnd().split(/\r?\n/);
+  if (lines.length < 1) throw new Error('scoreboard validation failed: empty file');
+
+  const header = lines[0].trim();
+  const cols = header.split(',');
+  if (cols.join(',') !== EXPECTED_COLS.join(',')) {
+    throw new Error(`scoreboard validation failed: header mismatch. expected=${EXPECTED_COLS.join(',')} got=${header}`);
+  }
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) continue;
+    const parts = line.split(',');
+    if (parts.length !== EXPECTED_COLS.length) {
+      throw new Error(`scoreboard validation failed: row ${i + 1} column count ${parts.length} != ${EXPECTED_COLS.length}`);
+    }
+
+    const week = parts[0];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(week)) {
+      throw new Error(`scoreboard validation failed: row ${i + 1} invalid week_start_date=${week}`);
+    }
+
+    // Validate numeric fields
+    for (let c = 1; c < parts.length; c++) {
+      const key = EXPECTED_COLS[c];
+      if (!NUMERIC_FIELDS.has(key)) continue;
+      const vRaw = parts[c].trim();
+      if (vRaw === '') continue; // allow blanks for GHL fields
+      const v = Number(vRaw);
+      if (!Number.isFinite(v)) throw new Error(`scoreboard validation failed: row ${i + 1} ${key} not numeric: ${vRaw}`);
+      if (v < 0) throw new Error(`scoreboard validation failed: row ${i + 1} ${key} negative: ${vRaw}`);
+
+      // Field-specific bounds
+      if (key === 'churn_pct_30d_logo' && (v < 0 || v > 100)) {
+        throw new Error(`scoreboard validation failed: row ${i + 1} churn_pct_30d_logo out of bounds 0..100: ${vRaw}`);
+      }
+      if (key === 'calendar_capacity_calls_per_week' && v === 0) {
+        throw new Error(`scoreboard validation failed: row ${i + 1} calendar_capacity_calls_per_week cannot be 0`);
+      }
+    }
+  }
+}
+
+function safeWriteScoreboard(csvPath, nextCsvText) {
+  const tmpPath = `${csvPath}.tmp.${process.pid}.${Date.now()}`;
+  fs.writeFileSync(tmpPath, nextCsvText, 'utf8');
+
+  // Re-read and validate what we actually wrote
+  const written = fs.readFileSync(tmpPath, 'utf8');
+  validateScoreboardCSV(written);
+
+  fs.renameSync(tmpPath, csvPath);
 }
 
 async function main() {
+  const args = new Set(process.argv.slice(2));
+  const isTest = args.has('--test') || args.has('--dry-run');
+
   const workspaceDir = process.cwd();
   loadDotEnv(path.join(workspaceDir, '.env'));
 
@@ -350,8 +422,23 @@ async function main() {
     // Leave GHL fields blank until integrated.
   };
 
-  upsertRow(scoreboardPath, isoDate(weekStart), patch);
+  const nextCsv = buildNextCSV(scoreboardPath, isoDate(weekStart), patch);
 
+  try {
+    validateScoreboardCSV(nextCsv);
+  } catch (e) {
+    console.error(String(e?.message || e));
+    process.exit(2);
+  }
+
+  if (isTest) {
+    const current = fs.readFileSync(scoreboardPath, 'utf8');
+    const changed = current !== nextCsv;
+    console.log(`TEST PASS: validation OK. wouldWrite=${changed} week_start_date=${isoDate(weekStart)}`);
+    process.exit(0);
+  }
+
+  safeWriteScoreboard(scoreboardPath, nextCsv);
   console.log(`Updated scoreboard row for week_start_date=${isoDate(weekStart)}`);
 }
 

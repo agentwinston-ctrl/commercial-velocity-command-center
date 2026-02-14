@@ -152,45 +152,64 @@ function monthKeyFromTs(ts) {
 }
 
 function computeStripeMetrics({ subsAll, windowStart, windowEnd, monthStartTs, rolling30Start, rolling30End }) {
-  // Active clients at start-of-month (as-of monthStartTs)
-  const activeAtMonthStart = listToCustomerSet(subsAll.filter((s) => isActiveAt(s, monthStartTs)));
+  // Simplified retention model (per Devon):
+  // Active = subscription status "active".
+  // Churn = subscription status "canceled" OR paused (pause_collection present).
+  // At-risk is not tracked for now.
+  //
+  // NOTE: For historical windows, Stripe does not provide pause_collection start timestamps.
+  // We therefore treat pause_collection as a current state and apply it at window end.
 
-  // Churn MTD: customers who were active at month start and then canceled within [monthStartTs, windowEnd)
+  const activeAtMonthStart = new Set();
+  for (const s of subsAll) {
+    if (!isActiveAt(s, monthStartTs)) continue;
+    if (String(s.status || '').toLowerCase() === 'active') activeAtMonthStart.add(String(s.customer));
+  }
+
+  // Churn MTD: customers active at month start that became canceled OR paused by window end.
   const churnedMtd = new Set();
   for (const s of subsAll) {
-    const ca = s?.canceled_at;
-    if (!ca) continue;
-    if (!isActiveAt(s, monthStartTs)) continue;
-    if (inWindow(ca, monthStartTs, windowEnd)) churnedMtd.add(String(s.customer));
+    const cust = String(s.customer);
+    if (!activeAtMonthStart.has(cust)) continue;
+
+    const canceledAt = s?.canceled_at || null;
+    const canceledInWindow = canceledAt && inWindow(canceledAt, monthStartTs, windowEnd);
+
+    const pausedNow = !!s.pause_collection;
+    const isCanceledNow = String(s.status || '').toLowerCase() === 'canceled';
+
+    // paused is treated as churn, but we can't timestamp it historically, so we apply at window end.
+    if (canceledInWindow || isCanceledNow || pausedNow) churnedMtd.add(cust);
   }
 
-  // Rolling 30d logo churn: among customers active at rolling30Start, how many canceled in [rolling30Start, rolling30End)
-  const activeAtRollingStart = listToCustomerSet(subsAll.filter((s) => isActiveAt(s, rolling30Start)));
+  // Rolling 30d churn: among customers active (active status) at rolling30Start, how many are churned by rolling30End.
+  const activeAtRollingStart = new Set();
+  for (const s of subsAll) {
+    if (!isActiveAt(s, rolling30Start)) continue;
+    if (String(s.status || '').toLowerCase() === 'active') activeAtRollingStart.add(String(s.customer));
+  }
+
   const churned30 = new Set();
   for (const s of subsAll) {
-    const ca = s?.canceled_at;
-    if (!ca) continue;
     const cust = String(s.customer);
     if (!activeAtRollingStart.has(cust)) continue;
-    if (inWindow(ca, rolling30Start, rolling30End)) churned30.add(cust);
-  }
-  const churnPct30 = activeAtRollingStart.size > 0 ? (churned30.size / activeAtRollingStart.size) * 100 : 0;
 
-  // At-risk: dedupe customers where pause_collection active OR status past_due/unpaid as-of windowEnd.
-  const atRisk = new Set();
-  for (const s of subsAll) {
-    if (!isActiveAt(s, windowEnd - 1)) continue; // must exist by end of period
-    const paused = !!s.pause_collection;
-    const status = String(s.status || '').toLowerCase();
-    const pastDueOrUnpaid = status === 'past_due' || status === 'unpaid';
-    if (paused || pastDueOrUnpaid) atRisk.add(String(s.customer));
+    const canceledAt = s?.canceled_at || null;
+    const canceledInWindow = canceledAt && inWindow(canceledAt, rolling30Start, rolling30End);
+
+    const pausedNow = !!s.pause_collection;
+    const isCanceledNow = String(s.status || '').toLowerCase() === 'canceled';
+
+    if (canceledInWindow || isCanceledNow || pausedNow) churned30.add(cust);
   }
+
+  const churnPct30 = activeAtRollingStart.size > 0 ? (churned30.size / activeAtRollingStart.size) * 100 : 0;
 
   return {
     clients_active_start_of_month_count: activeAtMonthStart.size,
     clients_churned_mtd_count: churnedMtd.size,
     churn_pct_30d_logo: pct(churnPct30),
-    clients_at_risk_count: atRisk.size,
+    clients_at_risk_count: '',
   };
 }
 

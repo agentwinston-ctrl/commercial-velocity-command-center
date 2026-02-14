@@ -1,13 +1,13 @@
 # WORKING — Winston (CEO)
 
-Last updated: 2026-02-14 12:16 PST
+Last updated: 2026-02-14 12:46 PST
 
-Current constraint: Measurement is incomplete for the acquisition chain (GHL not wired), but cash + retention now have real Stripe-backed metrics and an 8-week trend baseline.
+Current constraint: Constraint confidence is limited because acquisition-chain metrics are not wired (GHL pending). Stripe-only retention logic is currently simplified per Devon and may distort historical churn if pause_collection is treated as churn.
 
 Today’s top 3 priorities:
-1. Keep the Stripe scoreboard updating weekly (cash + churn + at-risk). Confirm restricted key is installed in .env.
-2. Define the future CRM spec for GHL so leads, speed-to-lead, booked, held, and won are clean and not gameable.
-3. Fill weekly priorities in goals.md so actions stay aligned.
+1. Keep weekly scoreboard update stable and validated (cron runs Mon 5am PT).
+2. Monday Weekly Focus Brief now enters Meeting Mode to set weekly priorities with Devon confirmation.
+3. When ready, spec and wire GHL acquisition metrics to unlock full constraint detection.
 
 Active experiments:
 -
@@ -16,8 +16,7 @@ Pending decisions (waiting on Devon):
 -
 
 Open loops:
-- GHL auth + pipeline IDs still unknown, so acquisition constraint detection is paused.
+- Weekly priorities in goals.md remain blank until next Monday meeting.
 
 Notes:
-- Stripe-only scripts now exist: scripts/scoreboard_backfill_8w.mjs and scripts/scoreboard_update_weekly.mjs.
-- Scoreboard schema is the 12-column constraint-engine schema. GHL columns remain blank until integrated.
+- Weekly Focus Brief cron updated to include Meeting Mode steps.

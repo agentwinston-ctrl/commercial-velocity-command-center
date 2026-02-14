@@ -27,6 +27,7 @@ export const AGENT_OS_DOCS: AgentOsDoc[] = [
   { id: "experiments", title: "EXPERIMENT ENGINE", filename: "EXPERIMENT_ENGINE.md" },
   { id: "decision", title: "DECISION ENGINE", filename: "DECISION_ENGINE.md" },
   { id: "loop", title: "STRATEGIC LOOP", filename: "STRATEGIC_LOOP.md" },
+  { id: "logging", title: "LOGGING RULES", filename: "LOGGING_RULES.md" },
   { id: "goals", title: "GOALS", filename: "goals.md" },
   { id: "activity", title: "ACTIVITY LOG", filename: "activity-log.md" },
   { id: "working", title: "WORKING", filename: "WORKING.md" },

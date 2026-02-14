@@ -19,6 +19,7 @@ export const AGENT_OS_DOCS: AgentOsDoc[] = [
   { id: "memory", title: "MEMORY", filename: "MEMORY.md" },
   { id: "agents", title: "AGENTS", filename: "AGENTS.md" },
   { id: "tools", title: "TOOLS", filename: "TOOLS.md" },
+  { id: "mandate", title: "EXECUTIVE MANDATE", filename: "EXECUTIVE_MANDATE.md" },
   { id: "permissions", title: "PERMISSIONS", filename: "PERMISSIONS.md" },
   { id: "constraint", title: "CONSTRAINT HIERARCHY", filename: "CONSTRAINT_HIERARCHY.md" },
   { id: "targets", title: "TARGETS & THRESHOLDS", filename: "TARGETS_AND_THRESHOLDS.md" },
